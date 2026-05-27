@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RadioInforme — Generador de Informes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F5F2ED;
+    --surface: #FAFAF7;
+    --surface2: #EEEAE2;
+    --text: #1A1814;
+    --text2: #5C574E;
+    --text3: #9C9890;
+    --accent: #1B4D3E;
+    --accent-light: #2D7A5F;
+    --accent-pale: #E1EDE9;
+    --amber: #8B5E0A;
+    --amber-pale: #FFF3D6;
+    --border: rgba(26,24,20,0.12);
+    --border2: rgba(26,24,20,0.06);
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Instrument Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "header header" "main sidebar";
+    gap: 0;
+  }
+
+  header {
+    grid-area: header;
+    background: var(--accent);
+    color: #fff;
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .logo {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .logo-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    letter-spacing: -0.3px;
+    color: #fff;
+  }
+
+  .logo-sub {
+    font-size: 12px;
+    color: rgba(255,255,255,0.55);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .header-hint {
+    font-size: 13px;
+    color: rgba(255,255,255,0.55);
+  }
+
+  main {
+    grid-area: main;
+    padding: 28px 32px;
+    overflow-y: auto;
+    max-height: calc(100vh - 60px);
+  }
+
+  sidebar {
+    grid-area: sidebar;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 60px);
+    position: sticky;
+    top: 0;
+  }
+
+  .sidebar-header {
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .sidebar-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+
+  .sidebar-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .report-entry {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--text);
+    position: relative;
+    animation: entryIn 0.25s ease;
+  }
+
+  @keyframes entryIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .report-entry .entry-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text3);
+    display: block;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .report-entry .delete-btn {
+    position: absolute;
+    top: 8px; right: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text3);
+    font-size: 16px;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+  }
+  .report-entry .delete-btn:hover { color: #c0392b; background: #fdecea; }
+
+  .sidebar-footer {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .copy-all-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    padding: 11px;
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+  }
+  .copy-all-btn:hover { background: var(--accent-light); }
+
+  .clear-btn {
+    width: 100%;
+    background: none;
+    color: var(--text3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 9px;
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 12.5px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .clear-btn:hover { color: #c0392b; border-color: #c0392b; }
+
+  .empty-sidebar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: 8px;
+    color: var(--text3);
+    padding: 20px;
+    text-align: center;
+  }
+  .empty-sidebar .icon { font-size: 32px; opacity: 0.4; }
+  .empty-sidebar p { font-size: 13px; line-height: 1.5; }
+
+  /* BREADCRUMB */
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+  }
+
+  .bc-item {
+    font-size: 12px;
+    color: var(--text3);
+    background: var(--surface2);
+    border-radius: 20px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+  .bc-item:hover { color: var(--text); border-color: var(--border); }
+  .bc-item.active { background: var(--accent-pale); color: var(--accent); font-weight: 500; }
+
+  .bc-sep { color: var(--border); font-size: 14px; user-select: none; }
+
+  /* PREVIEW PHRASE */
+  .phrase-preview {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 22px;
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    transition: all 0.2s;
+  }
+
+  .phrase-preview.has-text {
+    background: var(--accent-pale);
+    border-color: var(--accent);
+  }
+
+  .phrase-text {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text2);
+    flex: 1;
+    font-style: italic;
+  }
+
+  .phrase-text.active { color: var(--text); font-style: normal; }
+
+  .add-phrase-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+  }
+  .add-phrase-btn:hover { background: var(--accent-light); }
+  .add-phrase-btn:disabled { background: var(--surface2); color: var(--text3); cursor: not-allowed; }
+
+  /* SECTION */
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text3);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border2);
+  }
+
+  /* OPTIONS GRID */
+  .options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+
+  .option-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Instrument Sans', sans-serif;
+    color: var(--text);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .option-btn:hover {
+    border-color: var(--accent-light);
+    background: var(--accent-pale);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(27,77,62,0.08);
+  }
+
+  .option-btn.selected {
+    border-color: var(--accent);
+    background: var(--accent-pale);
+    box-shadow: 0 0 0 2px var(--accent-pale);
+  }
+
+  .option-btn.selected::before {
+    content: '✓';
+    position: absolute;
+    top: 6px; right: 8px;
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .option-title {
+    font-size: 13.5px;
+    font-weight: 500;
+    line-height: 1.35;
+    margin-bottom: 3px;
+  }
+
+  .option-sub {
+    font-size: 11.5px;
+    color: var(--text3);
+    line-height: 1.3;
+  }
+
+  .option-icon {
+    font-size: 20px;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  /* MODIFIER ROW */
+  .modifier-section {
+    margin-bottom: 22px;
+  }
+
+  .mod-group {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+
+  .mod-chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 12.5px;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--text2);
+    font-family: 'Instrument Sans', sans-serif;
+  }
+
+  .mod-chip:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-pale);
+  }
+
+  .mod-chip.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 500;
+  }
+
+  .mod-label {
+    font-size: 11.5px;
+    color: var(--text3);
+    margin-bottom: 5px;
+    font-weight: 500;
+  }
+
+  /* FREE TEXT */
+  .free-input {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 13.5px;
+    color: var(--text);
+    background: var(--surface);
+    resize: vertical;
+    min-height: 60px;
+    transition: border-color 0.15s;
+    margin-bottom: 10px;
+  }
+  .free-input:focus { outline: none; border-color: var(--accent); }
+
+  /* STEP INDICATOR */
+  .steps-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 26px;
+  }
+
+  .step-dot {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600;
+    border: 2px solid var(--border);
+    color: var(--text3);
+    background: var(--surface);
+    transition: all 0.2s;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+  }
+  .step-dot.done { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .step-dot.active { border-color: var(--accent); color: var(--accent); background: var(--accent-pale); }
+
+  .step-line {
+    flex: 1;
+    height: 2px;
+    background: var(--border2);
+    transition: background 0.2s;
+  }
+  .step-line.done { background: var(--accent); }
+
+  .step-label {
+    font-size: 10.5px;
+    color: var(--text3);
+    text-align: center;
+    width: 28px;
+    margin-top: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .steps-wrapper {
+    margin-bottom: 24px;
+  }
+
+  .steps-labels {
+    display: flex;
+    gap: 0;
+  }
+
+  .step-label-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+
+  .step-spacer {
+    flex: 1;
+  }
+
+  /* RESET BTN */
+  .reset-section-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 12px;
+    color: var(--text3);
+    cursor: pointer;
+    font-family: 'Instrument Sans', sans-serif;
+    transition: all 0.15s;
+    margin-bottom: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .reset-section-btn:hover { color: var(--text); border-color: var(--border2); }
+
+  /* COPY FEEDBACK */
+  .copy-toast {
+    position: fixed;
+    bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--accent);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-size: 13.5px;
+    font-weight: 500;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 999;
+  }
+  .copy-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .counter-badge {
+    background: var(--accent);
+    color: #fff;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 7px;
+    margin-left: 4px;
+  }
+
+  @media (max-width: 900px) {
+    body { grid-template-columns: 1fr; grid-template-areas: "header" "sidebar" "main"; }
+    sidebar { max-height: 280px; position: static; border-left: none; border-bottom: 1px solid var(--border); }
+    main { max-height: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-title">RadioInforme</span>
+    <span class="logo-sub">Generador de hallazgos</span>
+  </div>
+  <span class="header-hint">Selecciona opciones · construye frases · añade al informe</span>
+</header>
+
+<main id="main">
+  <div class="steps-wrapper" id="steps-wrapper"></div>
+  <div id="phrase-preview-wrapper"></div>
+  <div id="tree-area"></div>
+</main>
+
+<sidebar>
+  <div class="sidebar-header">
+    <span class="sidebar-title">Informe <span class="counter-badge" id="entry-count">0</span></span>
+    <button class="reset-section-btn" onclick="resetAll()" style="margin:0; border:none; background:none; font-size:12px; color:var(--text3); cursor:pointer;">↺ Reiniciar árbol</button>
+  </div>
+  <div class="sidebar-body" id="report-body">
+    <div class="empty-sidebar">
+      <div class="icon">📋</div>
+      <p>Las frases que añadas<br>aparecerán aquí</p>
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <button class="copy-all-btn" onclick="copyAll()">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+      Copiar informe completo
+    </button>
+    <button class="clear-btn" onclick="clearReport()">Borrar informe</button>
+  </div>
+</sidebar>
+
+<div class="copy-toast" id="toast">✓ Copiado al portapapeles</div>
+
+<script>
+const TREE = {
+  label: "Tipo de prueba",
+  key: "prueba",
+  options: [
+    {
+      id: "rx", title: "Radiografía", icon: "🫁", sub: "RX convencional",
+      phrase: "Estudio radiológico",
+      next: {
+        label: "Área anatómica",
+        key: "area",
+        options: [
+          {
+            id: "torax", title: "Tórax", icon: "🫁", sub: "PA / lateral",
+            phrase: "de tórax",
+            next: {
+              label: "Tipo de hallazgo",
+              key: "hallazgo",
+              options: [
+                {
+                  id: "parénquima", title: "Parénquima pulmonar", icon: "🌫️", sub: "Densidades, opacidades",
+                  phrase: "que muestra alteración del parénquima pulmonar",
+                  next: {
+                    label: "Lesión concreta",
+                    key: "lesion",
+                    options: [
+                      { id: "consolidacion", title: "Consolidación", icon: "◼", sub: "Ocupación alveolar", phrase: "en forma de consolidación" },
+                      { id: "opacidad_vidrio", title: "Vidrio deslustrado", icon: "🌁", sub: "Ground glass", phrase: "con patrón en vidrio deslustrado" },
+                      { id: "atelectasia", title: "Atelectasia", icon: "📉", sub: "Colapso pulmonar", phrase: "compatible con atelectasia" },
+                      { id: "nodulo", title: "Nódulo", icon: "⚫", sub: "Lesión focal redondeada", phrase: "que evidencia un nódulo pulmonar" },
+                      { id: "masa", title: "Masa", icon: "🔴", sub: ">3 cm", phrase: "con masa pulmonar de gran tamaño" },
+                    ],
+                    modifiers: {
+                      localización: ["lóbulo superior derecho","lóbulo medio","lóbulo inferior derecho","lóbulo superior izquierdo","lóbulo inferior izquierdo","bilateral","difuso"],
+                      tamaño: ["de pequeño tamaño","de tamaño medio","de gran tamaño"],
+                      bordes: ["con bordes bien definidos","con bordes mal definidos","con bordes espiculados"],
+                    }
+                  }
+                },
+                {
+                  id: "pleura", title: "Pleura", icon: "💧", sub: "Derrame, neumotórax",
+                  phrase: "con afectación pleural",
+                  next: {
+                    label: "Lesión concreta",
+                    key: "lesion",
+                    options: [
+                      { id: "derrame", title: "Derrame pleural", icon: "💧", sub: "Ocupación espacio pleural", phrase: "que muestra derrame pleural" },
+                      { id: "neumotorax", title: "Neumotórax", icon: "💨", sub: "Aire en espacio pleural", phrase: "compatible con neumotórax" },
+                      { id: "engrosamiento", title: "Engrosamiento pleural", icon: "📏", sub: "Pleuritis, mesotelioma", phrase: "con engrosamiento pleural" },
+                    ],
+                    modifiers: {
+                      lateralidad: ["derecho","izquierdo","bilateral"],
+                      cuantía: ["mínimo","moderado","masivo","leve"],
+                    }
+                  }
+                },
+                {
+                  id: "mediastino", title: "Mediastino", icon: "🫀", sub: "Ensanchamiento, masas",
+                  phrase: "con alteración mediastínica",
+                  next: {
+                    label: "Lesión concreta",
+                    key: "lesion",
+                    options: [
+                      { id: "ensanchamiento", title: "Ensanchamiento", icon: "↔️", sub: "Mediastino ampliado", phrase: "con ensanchamiento mediastínico" },
+                      { id: "masa_mediastinica", title: "Masa mediastínica", icon: "🔴", sub: "Lesión ocupante", phrase: "que evidencia masa en mediastino" },
+                      { id: "adenopatias", title: "Adenopatías", icon: "🫘", sub: "Ganglios aumentados", phrase: "con adenopatías mediastínicas" },
+                    ],
+                    modifiers: {
+                      localización: ["anterior","medio","posterior","superior"],
+                    }
+                  }
+                },
+                {
+                  id: "cardiaco", title: "Silueta cardíaca", icon: "❤️", sub: "Tamaño y forma",
+                  phrase: "con alteración de la silueta cardíaca",
+                  next: {
+                    label: "Lesión concreta",
+                    key: "lesion",
+                    options: [
+                      { id: "cardiomegalia", title: "Cardiomegalia", icon: "📈", sub: "ICT > 0.5", phrase: "compatible con cardiomegalia" },
+                      { id: "normal_card", title: "Tamaño normal", icon: "✅", sub: "ICT normal", phrase: "con silueta cardíaca de tamaño normal" },
+                    ],
+                    modifiers: {
+                      grado: ["leve","moderada","severa"],
+                    }
+                  }
+                },
+              ]
+            }
+          },
+          {
+            id: "abdomen", title: "Abdomen", icon: "🫃", sub: "Simple / con contraste",
+            phrase: "de abdomen",
+            next: {
+              label: "Tipo de hallazgo",
+              key: "hallazgo",
+              options: [
+                {
+                  id: "obstruccion", title: "Obstrucción intestinal", icon: "🔒", sub: "Niveles hidroaéreos",
+                  phrase: "que muestra signos de obstrucción intestinal",
+                  next: {
+                    label: "Lesión concreta",
+                    key: "lesion",
+                    options: [
+                      { id: "obs_intestino_delgado", title: "Intestino delgado", icon: "〰️", sub: "Asas dilatadas", phrase: "a nivel de intestino delgado" },
+                      { id: "obs_colon", title: "Colon", icon: "🌀", sub: "Dilatación cólica", phrase: "a nivel de colon" },
+                    ],
+                    modifiers: {
+                      grado: ["parcial","completa"],
+                      distribución: ["proximal","distal","generalizada"],
+                    }
+                  }
+                },
+                {
+                  id: "neumoperitoneo", title: "Neumoperitoneo", icon: "💨", sub: "Aire libre",
+                  phrase: "con hallazgo de neumoperitoneo",
+                  next: {
+                    label: "Localización del aire",
+                    key: "lesion",
+                    options: [
+                      { id: "sub_diafragma", title: "Subdiafragmático", icon: "⬆️", sub: "Bajo el diafragma", phrase: "subdiafragmático bilateral" },
+                      { id: "sub_diaf_der", title: "Subdiafragmático derecho", icon: "➡️", sub: "", phrase: "subdiafragmático derecho" },
+                    ],
+                    modifiers: {
+                      cuantía: ["escaso","moderado","abundante"],
+                    }
+                  }
+                },
+                {
+                  id: "calcificaciones", title: "Calcificaciones", icon: "🪨", sub: "Litiasis, calcinosis",
+                  phrase: "con calcificaciones abdominales",
+                  next: {
+                    label: "Localización",
+                    key: "lesion",
+                    options: [
+                      { id: "litiasis_renal", title: "Litiasis renal", icon: "🪨", sub: "Cálculo renal", phrase: "en relación con litiasis renal" },
+                      { id: "litiasis_biliar", title: "Litiasis biliar", icon: "🟡", sub: "Cálculo biliar", phrase: "en relación con litiasis biliar" },
+                      { id: "calcif_vascular", title: "Calcificación vascular", icon: "🔵", sub: "Aorta, iliacas", phrase: "de origen vascular" },
+                    ],
+                    modifiers: {
+                      lateralidad: ["derecha","izquierda","bilateral"],
+                      tamaño: ["milimétrico","centimétrico","de gran tamaño"],
+                    }
+                  }
+                },
+              ]
+            }
+          },
+          {
+            id: "esqueleto", title: "Sistema músculo-esquelético", icon: "🦴", sub: "Huesos y articulaciones",
+            phrase: "del sistema músculo-esquelético",
+            next: {
+              label: "Región anatómica",
+              key: "hallazgo",
+              options: [
+                {
+                  id: "columna", title: "Columna vertebral", icon: "🦴", sub: "Cervical, dorsal, lumbar",
+                  phrase: "a nivel de columna vertebral",
+                  next: {
+                    label: "Hallazgo",
+                    key: "lesion",
+                    options: [
+                      { id: "fractura_vertebral", title: "Fractura vertebral", icon: "💥", sub: "Acuñamiento, aplastamiento", phrase: "con fractura vertebral" },
+                      { id: "osteoporosis", title: "Osteoporosis", icon: "🌿", sub: "Disminución densidad", phrase: "con signos de osteoporosis" },
+                      { id: "espondiloartrosis", title: "Espondiloartrosis", icon: "⚙️", sub: "Cambios degenerativos", phrase: "con cambios espondiloartrósicos" },
+                      { id: "escoliosis", title: "Escoliosis", icon: "↩️", sub: "Desviación lateral", phrase: "con escoliosis" },
+                    ],
+                    modifiers: {
+                      segmento: ["cervical","dorsal","lumbar","lumbosacra","cervicotorácica"],
+                      nivel: ["C3-C4","C5-C6","D6-D7","D10-D11","L1","L2","L3","L4","L5"],
+                      grado: ["leve","moderada","severa"],
+                    }
+                  }
+                },
+                {
+                  id: "extremidades", title: "Extremidades", icon: "🦵", sub: "MMSS y MMII",
+                  phrase: "en extremidades",
+                  next: {
+                    label: "Hallazgo",
+                    key: "lesion",
+                    options: [
+                      { id: "fractura_ext", title: "Fractura", icon: "💥", sub: "Trazo de fractura", phrase: "con fractura ósea" },
+                      { id: "luxacion", title: "Luxación", icon: "🔀", sub: "Pérdida de congruencia", phrase: "con luxación articular" },
+                      { id: "artritis", title: "Artritis", icon: "🔥", sub: "Cambios inflamatorios", phrase: "con signos de artritis" },
+                      { id: "artrosis", title: "Artrosis", icon: "⚙️", sub: "Cambios degenerativos", phrase: "con cambios artrósicos" },
+                      { id: "lesion_osea", title: "Lesión ósea", icon: "⚫", sub: "Lítica / blástica", phrase: "con lesión ósea focal" },
+                    ],
+                    modifiers: {
+                      localización: ["húmero","radio","cúbito","carpo","fémur","tibia","peroné","tarso","clavícula","escápula","pelvis"],
+                      lateralidad: ["derecha","izquierda","bilateral"],
+                      características: ["con desplazamiento","sin desplazamiento","conminuta","transversa","oblicua","espiral"],
+                    }
+                  }
+                },
+              ]
+            }
+          },
+          {
+            id: "craneo", title: "Cráneo y cara", icon: "💀", sub: "Huesos del cráneo",
+            phrase: "de cráneo",
+            next: {
+              label: "Hallazgo",
+              key: "hallazgo",
+              options: [
+                {
+                  id: "fractura_craneal", title: "Fractura craneal", icon: "💥", sub: "Trazo de fractura",
+                  phrase: "con fractura craneal",
+                  next: {
+                    label: "Localización",
+                    key: "lesion",
+                    options: [
+                      { id: "frontal", title: "Frontal", icon: "⬆️", sub: "", phrase: "a nivel frontal" },
+                      { id: "parietal", title: "Parietal", icon: "↖️", sub: "", phrase: "a nivel parietal" },
+                      { id: "temporal", title: "Temporal", icon: "◀️", sub: "", phrase: "a nivel temporal" },
+                      { id: "occipital", title: "Occipital", icon: "⬇️", sub: "", phrase: "a nivel occipital" },
+                      { id: "base_craneo", title: "Base del cráneo", icon: "🔻", sub: "", phrase: "en la base del cráneo" },
+                    ],
+                    modifiers: {
+                      lateralidad: ["derecha","izquierda"],
+                      tipo: ["lineal","conminuta","deprimida","con hundimiento"],
+                    }
+                  }
+                },
+              ]
+            }
+          },
+        ]
+      }
+    },
+    {
+      id: "tc", title: "TC / TAC", icon: "🔬", sub: "Tomografía computarizada",
+      phrase: "Estudio de tomografía computarizada",
+      next: {
+        label: "Área anatómica",
+        key: "area",
+        options: [
+          {
+            id: "tc_torax", title: "Tórax", icon: "🫁", sub: "Con/sin contraste",
+            phrase: "de tórax",
+            next: {
+              label: "Tipo de hallazgo",
+              key: "hallazgo",
+              options: [
+                {
+                  id: "nodulo_tc", title: "Nódulo pulmonar", icon: "⚫", sub: "Sólido, subsólido, en vidrio",
+                  phrase: "que evidencia nódulo pulmonar",
+                  next: {
+                    label: "Características",
+                    key: "lesion",
+                    options: [
+                      { id: "solido", title: "Sólido", icon: "⬛", sub: "Completamente sólido", phrase: "de naturaleza sólida" },
+                      { id: "subsólido", title: "Subsólido", icon: "◧", sub: "Componente sólido parcial", phrase: "de naturaleza subsólida" },
+                      { id: "vidrio_deslustrado_nod", title: "Vidrio deslustrado puro", icon: "🌫️", sub: "Sin componente sólido", phrase: "en vidrio deslustrado puro" },
+                      { id: "calcificado", title: "Calcificado", icon: "🪨", sub: "Con calcificación", phrase: "con calcificación en su interior" },
+                    ],
+                    modifiers: {
+                      tamaño: ["<6mm","6-8mm","8-15mm","15-30mm",">30mm"],
+                      localización: ["lóbulo superior derecho","lóbulo medio","lóbulo inferior derecho","lóbulo superior izquierdo","lóbulo inferior izquierdo"],
+                      bordes: ["con bordes lisos","con bordes lobulados","con bordes espiculados","con corona radiata"],
+                      atenuación: ["de baja atenuación","de alta atenuación","heterogéneo"],
+                    }
+                  }
+                },
+                {
+                  id: "tromboembolismo", title: "TEP (Tromboembolismo)", icon: "🚫", sub: "Defecto de repleción",
+                  phrase: "con hallazgo sugestivo de tromboembolismo pulmonar",
+                  next: {
+                    label: "Localización del trombo",
+                    key: "lesion",
+                    options: [
+                      { id: "tep_central", title: "Central", icon: "🎯", sub: "Arterias principales", phrase: "a nivel central bilateral" },
+                      { id: "tep_lobar", title: "Lobar", icon: "⬆️", sub: "Arterias lobares", phrase: "a nivel lobar" },
+                      { id: "tep_segmentario", title: "Segmentario", icon: "🔀", sub: "Arterias segmentarias", phrase: "a nivel segmentario" },
+                      { id: "tep_subsegmentario", title: "Subsegmentario", icon: "🔸", sub: "Arteriolas pequeñas", phrase: "a nivel subsegmentario" },
+                    ],
+                    modifiers: {
+                      lateralidad: ["derecho","izquierdo","bilateral"],
+                      strain_vd: ["sin signos de sobrecarga de ventrículo derecho","con signos de sobrecarga de ventrículo derecho"],
+                    }
+                  }
+                },
+              ]
+            }
+          },
+          {
+            id: "tc_abdomen", title: "Abdomen-Pelvis", icon: "🫃", sub: "Con/sin contraste",
+            phrase: "de abdomen y pelvis",
+            next: {
+              label: "Órgano / hallazgo",
+              key: "hallazgo",
+              options: [
+                {
+                  id: "higado", title: "Hígado", icon: "🫀", sub: "LOE, cirrosis, esteatosis",
+                  phrase: "con hallazgo en hígado",
+                  next: {
+                    label: "Lesión hepática",
+                    key: "lesion",
+                    options: [
+                      { id: "quiste_hepatico", title: "Quiste simple", icon: "🫧", sub: "Líquido, pared fina", phrase: "compatible con quiste hepático simple" },
+                      { id: "hemangioma", title: "Hemangioma", icon: "🔴", sub: "Relleno centrípeto", phrase: "compatible con hemangioma hepático" },
+                      { id: "loe_hepatica", title: "LOE hepática", icon: "⚫", sub: "Lesión ocupante espacio", phrase: "con lesión ocupante de espacio hepática" },
+                      { id: "esteatosis", title: "Esteatosis hepática", icon: "💛", sub: "Infiltración grasa", phrase: "con datos de esteatosis hepática" },
+                      { id: "cirrosis", title: "Cirrosis", icon: "🔶", sub: "Cambios cirróticos", phrase: "con signos de hepatopatía crónica / cirrosis" },
+                    ],
+                    modifiers: {
+                      segmento: ["segmento I","segmento II","segmento III","segmento IVa","segmento IVb","segmento V","segmento VI","segmento VII","segmento VIII","lóbulo derecho","lóbulo izquierdo"],
+                      tamaño: ["de pequeño tamaño (<1cm)","de tamaño medio (1-3cm)","de gran tamaño (>3cm)"],
+                      número: ["única","múltiples","innumerables"],
+                    }
+                  }
+                },
+                {
+                  id: "riñon", title: "Riñones", icon: "🫘", sub: "Litiasis, LOE, quistes",
+                  phrase: "con hallazgo renal",
+                  next: {
+                    label: "Lesión renal",
+                    key: "lesion",
+                    options: [
+                      { id: "litiasis_tc", title: "Litiasis", icon: "🪨", sub: "Cálculo ureteral/renal", phrase: "con litiasis renal" },
+                      { id: "quiste_renal", title: "Quiste renal", icon: "🫧", sub: "Bosniak I-IV", phrase: "con quiste renal" },
+                      { id: "loe_renal", title: "LOE renal", icon: "⚫", sub: "Masa sólida", phrase: "con lesión ocupante de espacio renal" },
+                      { id: "hidronefrosis", title: "Hidronefrosis", icon: "💧", sub: "Dilatación pielocalicial", phrase: "con hidronefrosis" },
+                    ],
+                    modifiers: {
+                      lateralidad: ["derecho","izquierdo","bilateral"],
+                      grado: ["leve","moderada","severa"],
+                      Bosniak: ["Bosniak I","Bosniak II","Bosniak IIF","Bosniak III","Bosniak IV"],
+                    }
+                  }
+                },
+              ]
+            }
+          },
+          {
+            id: "tc_craneo", title: "Cráneo / cerebro", icon: "🧠", sub: "Con/sin contraste",
+            phrase: "de cráneo",
+            next: {
+              label: "Tipo de hallazgo",
+              key: "hallazgo",
+              options: [
+                {
+                  id: "hemorragia", title: "Hemorragia intracraneal", icon: "🔴", sub: "Hiperdensidad aguda",
+                  phrase: "con hemorragia intracraneal",
+                  next: {
+                    label: "Tipo de hemorragia",
+                    key: "lesion",
+                    options: [
+                      { id: "hematoma_subdural", title: "Hematoma subdural", icon: "🌙", sub: "Crescent shape", phrase: "en forma de hematoma subdural" },
+                      { id: "hematoma_epidural", title: "Hematoma epidural", icon: "🔺", sub: "Lenticular", phrase: "en forma de hematoma epidural" },
+                      { id: "hemorragia_subaracnoidea", title: "Hemorragia subaracnoidea", icon: "💧", sub: "Cisternas basales", phrase: "compatible con hemorragia subaracnoidea" },
+                      { id: "hematoma_intraparenquimatoso", title: "Hematoma intraparenquimatoso", icon: "⚫", sub: "Dentro del parénquima", phrase: "con hematoma intraparenquimatoso" },
+                    ],
+                    modifiers: {
+                      localización: ["frontal","parietal","temporal","occipital","cerebeloso","ganglio-capsular","intraventricular"],
+                      lateralidad: ["derecho","izquierdo","bilateral"],
+                      volumen: ["de pequeño volumen","de volumen moderado","de gran volumen"],
+                      efecto_masa: ["sin efecto de masa significativo","con efecto de masa y desviación de línea media de aproximadamente"],
+                    }
+                  }
+                },
+                {
+                  id: "ictus", title: "Ictus isquémico", icon: "⚡", sub: "Hipodensidad, DWI",
+                  phrase: "con hallazgos sugestivos de ictus isquémico",
+                  next: {
+                    label: "Territorio afectado",
+                    key: "lesion",
+                    options: [
+                      { id: "acm", title: "ACM (art. cerebral media)", icon: "🌊", sub: "Territorio más frecuente", phrase: "en territorio de arteria cerebral media" },
+                      { id: "aca", title: "ACA (art. cerebral anterior)", icon: "⬆️", sub: "", phrase: "en territorio de arteria cerebral anterior" },
+                      { id: "acp", title: "ACP (art. cerebral posterior)", icon: "⬇️", sub: "", phrase: "en territorio de arteria cerebral posterior" },
+                      { id: "vertebrobasilar", title: "Vertebrobasilar", icon: "🔻", sub: "Territorio posterior", phrase: "en territorio vertebrobasilar" },
+                    ],
+                    modifiers: {
+                      lateralidad: ["derecho","izquierdo"],
+                      fase: ["hiperagudo (<6h)","agudo (6-24h)","subagudo (1-7 días)","crónico (>7 días)"],
+                      ASPECT: ["con score ASPECTS de"],
+                    }
+                  }
+                },
+              ]
+            }
+          },
+        ]
+      }
+    },
+    {
+      id: "eco", title: "Ecografía", icon: "📡", sub: "Ultrasonidos",
+      phrase: "Estudio ecográfico",
+      next: {
+        label: "Área anatómica",
+        key: "area",
+        options: [
+          {
+            id: "eco_abdominal", title: "Abdominal", icon: "🫃", sub: "Órganos sólidos",
+            phrase: "abdominal",
+            next: {
+              label: "Órgano",
+              key: "hallazgo",
+              options: [
+                {
+                  id: "eco_vesicula", title: "Vesícula biliar", icon: "🟡", sub: "Litiasis, colecistitis",
+                  phrase: "centrado en vesícula biliar",
+                  next: {
+                    label: "Hallazgo",
+                    key: "lesion",
+                    options: [
+                      { id: "litiasis_bili", title: "Litiasis biliar", icon: "🪨", sub: "Colelitiasis", phrase: "con litiasis vesicular" },
+                      { id: "barro_biliar", title: "Barro biliar", icon: "🌊", sub: "Ecogenicidad aumentada", phrase: "con barro biliar" },
+                      { id: "colecistitis", title: "Colecistitis", icon: "🔥", sub: "Inflamación aguda", phrase: "con signos ecográficos de colecistitis aguda" },
+                      { id: "polipo_vesicular", title: "Pólipo vesicular", icon: "🔵", sub: "Lesión pediculada", phrase: "con pólipo vesicular" },
+                    ],
+                    modifiers: {
+                      tamaño: ["de pequeño tamaño","de tamaño medio","de gran tamaño"],
+                      número: ["único","múltiples"],
+                    }
+                  }
+                },
+                {
+                  id: "eco_tiroides", title: "Tiroides", icon: "🦋", sub: "Nódulos, bocio",
+                  phrase: "de tiroides",
+                  next: {
+                    label: "Hallazgo",
+                    key: "lesion",
+                    options: [
+                      { id: "nodulo_tiroideo", title: "Nódulo tiroideo", icon: "⚫", sub: "TI-RADS", phrase: "con nódulo tiroideo" },
+                      { id: "bocio", title: "Bocio", icon: "🔶", sub: "Glándula aumentada", phrase: "con bocio" },
+                      { id: "tiroiditis", title: "Tiroiditis", icon: "🔥", sub: "Hashimoto, De Quervain", phrase: "con patrón ecográfico sugestivo de tiroiditis" },
+                    ],
+                    modifiers: {
+                      TIRADS: ["TI-RADS 1","TI-RADS 2","TI-RADS 3","TI-RADS 4","TI-RADS 5"],
+                      lateralidad: ["lóbulo derecho","lóbulo izquierdo","istmo","bilateral"],
+                      tamaño: ["<1cm","1-2cm","2-4cm",">4cm"],
+                      ecogenicidad: ["hipoecoico","hiperecoico","isoecoico","heterogéneo"],
+                    }
+                  }
+                },
+              ]
+            }
+          },
+          {
+            id: "eco_partes_blandas", title: "Partes blandas", icon: "🦵", sub: "Tejidos blandos",
+            phrase: "de partes blandas",
+            next: {
+              label: "Hallazgo",
+              key: "hallazgo",
+              options: [
+                {
+                  id: "quiste_partes_blandas", title: "Lesión quística", icon: "🫧", sub: "Quiste, ganglión",
+                  phrase: "con lesión quística",
+                  next: {
+                    label: "Tipo",
+                    key: "lesion",
+                    options: [
+                      { id: "quiste_simple_pb", title: "Quiste simple", icon: "🫧", sub: "Anecogénico, pared fina", phrase: "de tipo quiste simple" },
+                      { id: "ganglio_sinovial", title: "Ganglión sinovial", icon: "🔵", sub: "Pararticular", phrase: "compatible con ganglión sinovial" },
+                      { id: "quiste_baker", title: "Quiste de Baker", icon: "💧", sub: "Fosa poplítea", phrase: "compatible con quiste de Baker" },
+                    ],
+                    modifiers: {
+                      tamaño: ["<1cm","1-3cm",">3cm"],
+                    }
+                  }
+                },
+              ]
+            }
+          },
+        ]
+      }
+    },
+    {
+      id: "rm", title: "RM / MRI", icon: "🧲", sub: "Resonancia magnética",
+      phrase: "Estudio de resonancia magnética",
+      next: {
+        label: "Área anatómica",
+        key: "area",
+        options: [
+          {
+            id: "rm_craneo", title: "Cráneo / cerebro", icon: "🧠", sub: "Multiparamétrica",
+            phrase: "de cráneo",
+            next: {
+              label: "Tipo de hallazgo",
+              key: "hallazgo",
+              options: [
+                {
+                  id: "lesion_desmielinizante", title: "Lesión desmielinizante", icon: "⚡", sub: "EM, EMAD",
+                  phrase: "con lesiones sugestivas de enfermedad desmielinizante",
+                  next: {
+                    label: "Distribución",
+                    key: "lesion",
+                    options: [
+                      { id: "juxtacortical", title: "Yuxtacortical", icon: "🔵", sub: "Adyacente a corteza", phrase: "de localización yuxtacortical" },
+                      { id: "periventricular", title: "Periventricular", icon: "🌀", sub: "Criterio Barkhof", phrase: "de localización periventricular" },
+                      { id: "infratentorial", title: "Infratentorial", icon: "⬇️", sub: "Fosa posterior", phrase: "de localización infratentorial" },
+                      { id: "medular", title: "Médula espinal", icon: "🦴", sub: "Lesión medular", phrase: "con afectación medular" },
+                    ],
+                    modifiers: {
+                      realce: ["sin realce tras contraste","con realce en anillo tras contraste","con realce nodular tras contraste"],
+                      criterios: ["que cumple criterios McDonald 2017 de diseminación en espacio","que no cumple criterios de diseminación en espacio"],
+                    }
+                  }
+                },
+              ]
+            }
+          },
+          {
+            id: "rm_columna", title: "Columna vertebral", icon: "🦴", sub: "Cervical, dorsal, lumbar",
+            phrase: "de columna vertebral",
+            next: {
+              label: "Hallazgo",
+              key: "hallazgo",
+              options: [
+                {
+                  id: "hernia_discal", title: "Hernia discal", icon: "💥", sub: "Protrusión, extrusión",
+                  phrase: "que evidencia hernia discal",
+                  next: {
+                    label: "Tipo de hernia",
+                    key: "lesion",
+                    options: [
+                      { id: "protrusión", title: "Protrusión", icon: "🔸", sub: "Base >ápex", phrase: "en forma de protrusión discal" },
+                      { id: "extrusión", title: "Extrusión", icon: "🔴", sub: "Ápex >base", phrase: "en forma de extrusión discal" },
+                      { id: "secuestro", title: "Secuestro", icon: "⚫", sub: "Fragmento libre", phrase: "con secuestro discal" },
+                      { id: "abombamiento", title: "Abombamiento difuso", icon: "🔶", sub: "Bulging", phrase: "con abombamiento difuso del anillo" },
+                    ],
+                    modifiers: {
+                      nivel: ["C3-C4","C4-C5","C5-C6","C6-C7","L1-L2","L2-L3","L3-L4","L4-L5","L5-S1","D10-D11","D11-D12","D12-L1"],
+                      dirección: ["central","paracentral derecha","paracentral izquierda","foraminal derecha","foraminal izquierda","extraforaminal"],
+                      compresión: ["sin compresión radicular clara","con compresión de raíz derecha","con compresión de raíz izquierda","con compresión del saco tecal"],
+                    }
+                  }
+                },
+              ]
+            }
+          },
+          {
+            id: "rm_mama", title: "Mama", icon: "🔵", sub: "Bilateral, con contraste",
+            phrase: "de mama bilateral",
+            next: {
+              label: "Tipo de hallazgo",
+              key: "hallazgo",
+              options: [
+                {
+                  id: "masa_mama", title: "Masa", icon: "⚫", sub: "Lesión focal",
+                  phrase: "con masa en mama",
+                  next: {
+                    label: "Características",
+                    key: "lesion",
+                    options: [
+                      { id: "masa_oval", title: "Forma oval", icon: "⭕", sub: "Oval, circunscrita", phrase: "de forma oval con márgenes circunscritos" },
+                      { id: "masa_irregular", title: "Forma irregular", icon: "🔶", sub: "Espiculada, no circunscrita", phrase: "de forma irregular con márgenes espiculados" },
+                    ],
+                    modifiers: {
+                      lateralidad: ["mama derecha","mama izquierda"],
+                      cuadrante: ["cuadrante superoexterno","cuadrante superointerno","cuadrante inferointerno","cuadrante inferoexterno","unión de cuadrantes","retroareolar"],
+                      BIRADS: ["BI-RADS 2","BI-RADS 3","BI-RADS 4A","BI-RADS 4B","BI-RADS 4C","BI-RADS 5","BI-RADS 6"],
+                      realce: ["sin realce significativo","con realce intenso","con realce en anillo","con curva de realce tipo I (persistente)","con curva de realce tipo II (plateau)","con curva de realce tipo III (wash-out)"],
+                    }
+                  }
+                },
+              ]
+            }
+          },
+        ]
+      }
+    },
+  ]
+};
+
+const CONCLUSIONS = {
+  "consolidacion": "Los hallazgos son compatibles con neumonía bacteriana. Se recomienda correlación clínica y analítica.",
+  "nodulo": "Nódulo pulmonar identificado. Se recomienda seguimiento según guías Fleischner.",
+  "masa": "Masa pulmonar identificada. Se recomienda estudio de extensión y biopsia para caracterización histológica.",
+  "tromboembolismo": "Hallazgos compatibles con tromboembolismo pulmonar. Se recomienda valoración clínica urgente e inicio de anticoagulación según protocolo.",
+  "ictus": "Hallazgos compatibles con infarto cerebral isquémico. Valorar ventana terapéutica para trombólisis/trombectomía mecánica.",
+  "hemorragia": "Hemorragia intracraneal identificada. Se recomienda valoración neuroquirúrgica urgente.",
+  "loe_hepatica": "Lesión hepática identificada. Se recomienda estudio de caracterización mediante RM hepática con contraste hepatoespecífico.",
+  "hernia_discal": "Hernia discal identificada. Se recomienda correlación con clínica del paciente y valoración por Traumatología/Neurocirugía si existe déficit neurológico.",
+  "nodulo_tiroideo": "Nódulo tiroideo. Se recomienda correlación con función tiroidea y PAAF según criterios TI-RADS.",
+  "masa_irregular": "Lesión mamaria con características de sospecha. Se recomienda biopsia percutánea para diagnóstico histológico.",
+};
+
+let state = {
+  path: [],
+  selectedOptions: [],
+  activeModifiers: {},
+  currentNode: TREE,
+  phraseBuilt: "",
+  entries: []
+};
+
+function getPhrase() {
+  let parts = state.selectedOptions.map(o => o.phrase).filter(Boolean);
+  let phrase = parts.join(" ");
+  
+  Object.entries(state.activeModifiers).forEach(([group, values]) => {
+    if (values.length > 0) {
+      phrase += " " + values.join(", ");
+    }
+  });
+  
+  phrase = phrase.trim();
+  if (phrase) phrase = phrase.charAt(0).toUpperCase() + phrase.slice(1) + ".";
+  return phrase;
+}
+
+function renderSteps() {
+  const wrapper = document.getElementById('steps-wrapper');
+  const steps = [
+    { label: "Prueba" },
+    { label: "Área" },
+    { label: "Hallazgo" },
+    { label: "Lesión" },
+    { label: "Detalle" },
+  ];
+  
+  const currentDepth = state.selectedOptions.length;
+  
+  let html = '<div class="steps-row">';
+  steps.forEach((s, i) => {
+    const isDone = i < currentDepth;
+    const isActive = i === currentDepth;
+    html += `<div class="step-dot ${isDone ? 'done' : ''} ${isActive ? 'active' : ''}" 
+      title="${s.label}"
+      style="cursor:${isDone ? 'pointer' : 'default'}"
+      onclick="${isDone ? `goToDepth(${i})` : ''}">
+      ${isDone ? '✓' : (i + 1)}
+    </div>`;
+    if (i < steps.length - 1) {
+      html += `<div class="step-line ${isDone ? 'done' : ''}"></div>`;
+    }
+  });
+  html += '</div>';
+  html += '<div class="steps-row" style="margin-top:4px; margin-bottom:0;">';
+  steps.forEach((s, i) => {
+    const isDone = i < currentDepth;
+    const isActive = i === currentDepth;
+    const selText = state.selectedOptions[i] ? state.selectedOptions[i].title : '';
+    html += `<div style="width:28px; text-align:center; font-size:10px; color:${isActive ? 'var(--accent)' : 'var(--text3)'}; flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${selText || s.label}">${selText || s.label}</div>`;
+    if (i < steps.length - 1) html += '<div style="flex:1"></div>';
+  });
+  html += '</div>';
+  
+  wrapper.innerHTML = html;
+}
+
+function renderPhrasePreview() {
+  const wrapper = document.getElementById('phrase-preview-wrapper');
+  const phrase = getPhrase();
+  const hasPhrase = phrase.length > 0;
+  
+  wrapper.innerHTML = `
+    <div class="phrase-preview ${hasPhrase ? 'has-text' : ''}">
+      <span class="phrase-text ${hasPhrase ? 'active' : ''}">${hasPhrase ? phrase : 'La frase se irá construyendo aquí mientras seleccionas opciones...'}</span>
+      <button class="add-phrase-btn" onclick="addPhrase()" ${!hasPhrase ? 'disabled' : ''}>
+        + Añadir al informe
+      </button>
+    </div>
+  `;
+}
+
+function renderTree() {
+  const area = document.getElementById('tree-area');
+  const node = state.currentNode;
+  
+  if (!node || !node.options) {
+    // End node — show conclusion suggestion
+    const lastId = state.selectedOptions[state.selectedOptions.length - 1]?.id;
+    const conclusionText = CONCLUSIONS[lastId] || "";
+    
+    area.innerHTML = `
+      <div class="section-label">Conclusión sugerida</div>
+      ${conclusionText ? `
+        <div style="background:var(--amber-pale); border:1px solid rgba(139,94,10,0.2); border-radius:var(--radius); padding:14px 16px; font-size:13.5px; color:var(--amber); line-height:1.6; margin-bottom:16px;">
+          <strong style="font-size:11px; text-transform:uppercase; letter-spacing:0.08em; display:block; margin-bottom:6px;">💡 Sugerencia</strong>
+          ${conclusionText}
+          <button onclick="addConclusionText(\`${conclusionText.replace(/`/g, "'")}\`)" style="display:block; margin-top:10px; background:none; border:1px solid var(--amber); color:var(--amber); border-radius:6px; padding:6px 12px; font-size:12px; cursor:pointer; font-family:inherit;">+ Añadir conclusión al informe</button>
+        </div>
+      ` : ''}
+      <div style="font-size:13px; color:var(--text3); margin-bottom:14px;">Has completado la descripción del hallazgo. Puedes añadirla al informe o volver atrás para modificarla.</div>
+      <button class="reset-section-btn" onclick="startNewPhrase()">↺ Nueva frase</button>
+    `;
+    return;
+  }
+  
+  // Breadcrumb
+  let bcHtml = '';
+  if (state.path.length > 0 || state.selectedOptions.length > 0) {
+    bcHtml = '<div class="breadcrumb">';
+    bcHtml += `<span class="bc-item" onclick="goToDepth(0)">Inicio</span>`;
+    state.selectedOptions.forEach((opt, i) => {
+      bcHtml += `<span class="bc-sep">›</span>`;
+      bcHtml += `<span class="bc-item ${i === state.selectedOptions.length - 1 ? 'active' : ''}" onclick="goToDepth(${i + 1})">${opt.title}</span>`;
+    });
+    bcHtml += '</div>';
+  }
+  
+  // Options
+  let optsHtml = `<div class="section-label">${node.label}</div><div class="options-grid">`;
+  node.options.forEach(opt => {
+    const isSelected = state.selectedOptions.some(s => s.id === opt.id);
+    optsHtml += `
+      <button class="option-btn ${isSelected ? 'selected' : ''}" onclick="selectOption(${JSON.stringify(opt).replace(/"/g, '&quot;')})">
+        ${opt.icon ? `<span class="option-icon">${opt.icon}</span>` : ''}
+        <div class="option-title">${opt.title}</div>
+        ${opt.sub ? `<div class="option-sub">${opt.sub}</div>` : ''}
+      </button>
+    `;
+  });
+  optsHtml += '</div>';
+  
+  area.innerHTML = bcHtml + optsHtml;
+}
+
+function renderModifiers(modifiers) {
+  if (!modifiers || Object.keys(modifiers).length === 0) return '';
+  
+  let html = '<div class="modifier-section">';
+  html += '<div class="section-label">Modificadores opcionales</div>';
+  
+  Object.entries(modifiers).forEach(([group, values]) => {
+    const activeVals = state.activeModifiers[group] || [];
+    html += `<div class="mod-label">${group.charAt(0).toUpperCase() + group.slice(1)}</div>`;
+    html += '<div class="mod-group">';
+    values.forEach(val => {
+      const isActive = activeVals.includes(val);
+      html += `<button class="mod-chip ${isActive ? 'active' : ''}" onclick="toggleModifier('${group}', '${val.replace(/'/g, "\\'")}')">
+        ${val}
+      </button>`;
+    });
+    html += '</div>';
+  });
+  
+  html += '</div>';
+  return html;
+}
+
+function selectOption(opt) {
+  // Pop state to the current level
+  const depth = state.selectedOptions.length;
+  
+  state.selectedOptions = [...state.selectedOptions, opt];
+  state.activeModifiers = {};
+  
+  if (opt.next) {
+    state.currentNode = opt.next;
+    
+    // Check if next has modifiers to show
+    const modHtml = opt.next.modifiers ? renderModifiers(opt.next.modifiers) : '';
+    
+    renderSteps();
+    renderPhrasePreview();
+    
+    const area = document.getElementById('tree-area');
+    const node = state.currentNode;
+    
+    // Breadcrumb
+    let bcHtml = '<div class="breadcrumb">';
+    bcHtml += `<span class="bc-item" onclick="goToDepth(0)">Inicio</span>`;
+    state.selectedOptions.forEach((o, i) => {
+      bcHtml += `<span class="bc-sep">›</span>`;
+      bcHtml += `<span class="bc-item ${i === state.selectedOptions.length - 1 ? 'active' : ''}" onclick="goToDepth(${i + 1})">${o.title}</span>`;
+    });
+    bcHtml += '</div>';
+    
+    // show modifiers before next-level options if needed
+    let modBeforeHtml = opt.modifiers ? renderModifiers(opt.modifiers) : '';
+    
+    let optsHtml = `<div class="section-label">${node.label}</div><div class="options-grid">`;
+    node.options.forEach(o => {
+      optsHtml += `
+        <button class="option-btn" onclick="selectOption(${JSON.stringify(o).replace(/"/g, '&quot;')})">
+          ${o.icon ? `<span class="option-icon">${o.icon}</span>` : ''}
+          <div class="option-title">${o.title}</div>
+          ${o.sub ? `<div class="option-sub">${o.sub}</div>` : ''}
+        </button>
+      `;
+    });
+    optsHtml += '</div>';
+    
+    area.innerHTML = bcHtml + modBeforeHtml + optsHtml;
+    
+  } else {
+    // Leaf node: show modifiers if available
+    state.currentNode = null;
+    renderSteps();
+    renderPhrasePreview();
+    
+    const area = document.getElementById('tree-area');
+    
+    let bcHtml = '<div class="breadcrumb">';
+    bcHtml += `<span class="bc-item" onclick="goToDepth(0)">Inicio</span>`;
+    state.selectedOptions.forEach((o, i) => {
+      bcHtml += `<span class="bc-sep">›</span>`;
+      bcHtml += `<span class="bc-item ${i === state.selectedOptions.length - 1 ? 'active' : ''}" onclick="goToDepth(${i + 1})">${o.title}</span>`;
+    });
+    bcHtml += '</div>';
+    
+    // Parent's modifiers if available
+    const parentNode = state.path[state.path.length - 1];
+    let modifiersHtml = '';
+    
+    // Find if the parent option (the one just before this) has modifiers
+    if (state.selectedOptions.length >= 1) {
+      const parentOpt = state.selectedOptions[state.selectedOptions.length - 2];
+      if (parentOpt && parentOpt.next && parentOpt.next.modifiers) {
+        modifiersHtml = renderModifiers(parentOpt.next.modifiers);
+      }
+    }
+    
+    const lastId = state.selectedOptions[state.selectedOptions.length - 1]?.id;
+    const conclusionText = CONCLUSIONS[lastId] || "";
+    
+    area.innerHTML = bcHtml + modifiersHtml + `
+      ${conclusionText ? `
+        <div class="section-label" style="margin-top:8px;">Conclusión sugerida</div>
+        <div style="background:var(--amber-pale); border:1px solid rgba(139,94,10,0.2); border-radius:var(--radius); padding:14px 16px; font-size:13.5px; color:var(--amber); line-height:1.6; margin-bottom:16px;">
+          <strong style="font-size:11px; text-transform:uppercase; letter-spacing:0.08em; display:block; margin-bottom:6px;">💡 Sugerencia</strong>
+          ${conclusionText}
+          <button onclick="addConclusionText(\`${conclusionText.replace(/`/g, "'")}\`)" style="display:block; margin-top:10px; background:none; border:1px solid var(--amber); color:var(--amber); border-radius:6px; padding:6px 12px; font-size:12px; cursor:pointer; font-family:inherit;">+ Añadir conclusión al informe</button>
+        </div>
+      ` : ''}
+      <button class="reset-section-btn" onclick="startNewPhrase()">↺ Nueva frase / nuevo hallazgo</button>
+    `;
+  }
+}
+
+function toggleModifier(group, val) {
+  if (!state.activeModifiers[group]) state.activeModifiers[group] = [];
+  const idx = state.activeModifiers[group].indexOf(val);
+  if (idx >= 0) {
+    state.activeModifiers[group].splice(idx, 1);
+  } else {
+    state.activeModifiers[group].push(val);
+  }
+  renderPhrasePreview();
+  
+  // Re-render chips only
+  document.querySelectorAll('.mod-chip').forEach(chip => {
+    const groupEl = chip.closest('.modifier-section');
+  });
+  
+  // Refresh modifier section
+  const area = document.getElementById('tree-area');
+  const chips = area.querySelectorAll('.mod-chip');
+  chips.forEach(chip => {
+    const onclick = chip.getAttribute('onclick');
+    const match = onclick.match(/toggleModifier\('(.+?)',\s*'(.+?)'\)/);
+    if (match) {
+      const g = match[1], v = match[2].replace(/\\'/g, "'");
+      const isNowActive = (state.activeModifiers[g] || []).includes(v);
+      chip.classList.toggle('active', isNowActive);
+    }
+  });
+}
+
+function goToDepth(depth) {
+  state.selectedOptions = state.selectedOptions.slice(0, depth);
+  state.activeModifiers = {};
+  
+  // Recompute currentNode
+  let node = TREE;
+  for (let i = 0; i < state.selectedOptions.length; i++) {
+    const optId = state.selectedOptions[i].id;
+    if (node.options) {
+      const found = node.options.find(o => o.id === optId);
+      if (found && found.next) node = found.next;
+      else { node = null; break; }
+    } else { node = null; break; }
+  }
+  state.currentNode = node;
+  
+  renderSteps();
+  renderPhrasePreview();
+  renderTree();
+}
+
+function addPhrase() {
+  const phrase = getPhrase();
+  if (!phrase) return;
+  
+  state.entries.push(phrase);
+  updateSidebar();
+  startNewPhrase();
+  
+  showToast("✓ Frase añadida al informe");
+}
+
+function addConclusionText(text) {
+  state.entries.push(text);
+  updateSidebar();
+  showToast("✓ Conclusión añadida");
+}
+
+function startNewPhrase() {
+  state.selectedOptions = [];
+  state.activeModifiers = {};
+  state.currentNode = TREE;
+  renderSteps();
+  renderPhrasePreview();
+  renderTree();
+}
+
+function updateSidebar() {
+  const body = document.getElementById('report-body');
+  const count = document.getElementById('entry-count');
+  count.textContent = state.entries.length;
+  
+  if (state.entries.length === 0) {
+    body.innerHTML = `<div class="empty-sidebar">
+      <div class="icon">📋</div>
+      <p>Las frases que añadas<br>aparecerán aquí</p>
+    </div>`;
+    return;
+  }
+  
+  body.innerHTML = state.entries.map((entry, i) => `
+    <div class="report-entry">
+      <span class="entry-num">Hallazgo ${i + 1}</span>
+      ${entry}
+      <button class="delete-btn" onclick="deleteEntry(${i})" title="Eliminar">×</button>
+    </div>
+  `).join('');
+}
+
+function deleteEntry(i) {
+  state.entries.splice(i, 1);
+  updateSidebar();
+}
+
+function copyAll() {
+  if (state.entries.length === 0) return;
+  const text = state.entries.join('\n\n');
+  navigator.clipboard.writeText(text).then(() => {
+    showToast("✓ Informe copiado al portapapeles");
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast("✓ Copiado");
+  });
+}
+
+function clearReport() {
+  if (state.entries.length === 0) return;
+  if (confirm("¿Borrar todas las frases del informe?")) {
+    state.entries = [];
+    updateSidebar();
+  }
+}
+
+function resetAll() {
+  state.entries = [];
+  startNewPhrase();
+  updateSidebar();
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2200);
+}
+
+// Init
+renderSteps();
+renderPhrasePreview();
+renderTree();
+updateSidebar();
+</script>
+</body>
+</html>
