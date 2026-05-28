@@ -1236,12 +1236,14 @@ function renderPhrasePreview() {
   const wrapper = document.getElementById('phrase-preview-wrapper');
   const phrase = getPhrase();
   const hasPhrase = phrase.length > 0;
-  
+  const isSubsequent = state.entries.length > 0;
+  const btnLabel = isSubsequent ? '+ Añadir y continuar' : '+ Añadir al informe';
+
   wrapper.innerHTML = `
     <div class="phrase-preview ${hasPhrase ? 'has-text' : ''}">
       <span class="phrase-text ${hasPhrase ? 'active' : ''}">${hasPhrase ? phrase : 'La frase se irá construyendo aquí mientras seleccionas opciones...'}</span>
       <button class="add-phrase-btn" onclick="addPhrase()" ${!hasPhrase ? 'disabled' : ''}>
-        + Añadir al informe
+        ${btnLabel}
       </button>
     </div>
   `;
@@ -1469,9 +1471,77 @@ function addPhrase() {
   
   state.entries.push(phrase);
   updateSidebar();
-  startNewPhrase();
-  
   showToast("✓ Frase añadida al informe");
+
+  // Show continuation panel instead of auto-resetting
+  showContinuationPanel();
+}
+
+function showContinuationPanel() {
+  const area = document.getElementById('tree-area');
+  const phraseWrapper = document.getElementById('phrase-preview-wrapper');
+
+  // Clear phrase preview
+  phraseWrapper.innerHTML = '';
+
+  // Build level options from the path already traversed
+  const levels = [
+    { depth: 0, label: "Inicio (nueva prueba)", icon: "🔄", desc: "Empezar desde el tipo de prueba" }
+  ];
+
+  // Add each traversed level as a jump-back point
+  const levelNames = ["Tipo de prueba","Área anatómica","Tipo de hallazgo","Lesión concreta","Modificadores"];
+  state.selectedOptions.forEach((opt, i) => {
+    if (i + 1 <= state.selectedOptions.length - 1) {
+      levels.push({
+        depth: i + 1,
+        label: `Mismo ${levelNames[i + 1] || 'nivel'}: desde "${opt.title}"`,
+        icon: "↩️",
+        desc: `Mantener: ${state.selectedOptions.slice(0, i + 1).map(o => o.title).join(" › ")}`
+      });
+    }
+  });
+
+  let cardsHtml = levels.map(l => `
+    <button class="option-btn" onclick="continueAtDepth(${l.depth})" style="text-align:left;">
+      <span class="option-icon">${l.icon}</span>
+      <div class="option-title" style="font-size:13px;">${l.label}</div>
+      <div class="option-sub">${l.desc}</div>
+    </button>
+  `).join('');
+
+  area.innerHTML = `
+    <div style="background:var(--accent-pale); border:1px solid rgba(27,77,62,0.18); border-radius:var(--radius); padding:14px 16px; margin-bottom:20px; display:flex; align-items:center; gap:10px;">
+      <span style="font-size:18px;">✅</span>
+      <div>
+        <div style="font-size:13px; font-weight:600; color:var(--accent); margin-bottom:2px;">Frase añadida al informe</div>
+        <div style="font-size:12px; color:var(--text2);">¿Desde qué nivel del árbol quieres continuar?</div>
+      </div>
+    </div>
+    <div class="section-label">Continuar desde…</div>
+    <div class="options-grid">${cardsHtml}</div>
+  `;
+}
+
+function continueAtDepth(depth) {
+  state.selectedOptions = state.selectedOptions.slice(0, depth);
+  state.activeModifiers = {};
+
+  // Recompute currentNode
+  let node = TREE;
+  for (let i = 0; i < state.selectedOptions.length; i++) {
+    const optId = state.selectedOptions[i].id;
+    if (node.options) {
+      const found = node.options.find(o => o.id === optId);
+      if (found && found.next) node = found.next;
+      else { node = null; break; }
+    } else { node = null; break; }
+  }
+  state.currentNode = node;
+
+  renderSteps();
+  renderPhrasePreview();
+  renderTree();
 }
 
 function addConclusionText(text) {
